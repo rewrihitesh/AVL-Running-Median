@@ -1,5 +1,5 @@
 /* @uthor Hitesh Kumar
-    Roll no 2019201039
+    roll no 2019201039
     Assignment 2 Question 3
 */
 
@@ -15,6 +15,34 @@ typedef struct _avl {
     struct _avl* leftPtr;
     struct _avl* rightPtr;
 } tree;
+
+
+tree* rr(tree* root);
+tree* ll(tree* root);
+tree* rl(tree* root);
+tree* lr(tree* root);
+tree* getNode(int val);
+tree* insertion(tree* root,int val);
+tree* find_K(tree* root, int k);
+tree* find_kth_largest(tree* root, int k);
+tree* _delete(tree* root,int val);
+tree* closest_key_node(tree* root, int k,tree* closest_key_root,int min_val);
+void update_count(tree *root);
+void print_tree(tree* root);
+void inverse_print_tree(tree* root);
+bool isEmpty(tree* root);
+bool getKey(tree* avl, int key);
+int getHeight(tree* root);
+int getCount(tree* root);
+int leftCount(tree* root);
+int rightCount(tree* root);
+int update_height(tree* root);
+int _inorder(tree* root,int breakPoint);
+int _converse_inorder(tree* root,int breakPoint);
+int closest_k(tree* root, int k,int closest_key,int min_val);
+int count_range_val(tree* root,int x, int y);
+int pos_k(tree* root, int key);
+float getMedian(tree* avl);
 
 
 bool isEmpty(tree* root){
@@ -40,6 +68,8 @@ void update_count(tree *root){
 
 tree* rr(tree* root){
     tree* temp= root->rightPtr;
+    if(!temp)
+        return root;
     root->rightPtr= temp->leftPtr;
     temp->leftPtr= root;
     update_count(root);
@@ -123,6 +153,7 @@ void print_tree(tree* root){
         print_tree(root->rightPtr);
 }
 
+
 void inverse_print_tree(tree* root){
         if(root==NULL){
             return ;
@@ -169,6 +200,7 @@ tree* insertion(tree* root,int val){
 }
 
 int _inorder(tree* root,int breakPoint){
+        counter=0;
         stack<tree*> custom_stack;
         tree* backup_root= root;
         //cout<<"inorder: "<<breakPoint<<endl;
@@ -186,13 +218,16 @@ int _inorder(tree* root,int breakPoint){
             counter++;
             backup_root= backup_root->rightPtr;
         } 
-    return -1;    
+        //handle -1 here
+    return -1;  
 }
 
+
+
 int _converse_inorder(tree* root,int breakPoint){
+        counter=0;
         stack<tree*> custom_stack;
         tree* backup_root= root;
-        
         while(backup_root || !custom_stack.empty()){
             while(backup_root){
                 custom_stack.push(backup_root);
@@ -222,6 +257,10 @@ tree* find_K(tree* root, int k){
     }
 }
 
+tree* find_kth_largest(tree* root, int k){
+    int total_size_tree=getCount(root);
+    return find_K(root, total_size_tree-k+1);
+}
 
 float getMedian(tree* avl){
         counter=0;
@@ -235,20 +274,14 @@ float getMedian(tree* avl){
         if((avl->count_nodes)%2){
             double double_mid=tree_total_node/2;
             int median=std::ceil(double_mid);
-
             float x=(float)(find_K(avl,median)->data);
             return x;
-            // ----- I have to test it yet -----
-            // if(median<=left_node_count){
-            //     return _converse_inorder(avl->leftPtr,left_node_count-median);
-            // }else{
-            //     return _inorder(avl->rightPtr,median-right_node_count);
-            // }
         }else{
                 int median = tree_total_node/2;
                 float x=(float)(find_K(avl,median)->data);
                 float y=(float)(find_K(avl,median+1)->data);
                 return (x+y)/2;
+
         }
 }
 
@@ -265,27 +298,95 @@ bool getKey(tree* avl, int key){
     return false;
 }
 
+int closest_k(tree* root, int k,int closest_key= -1 ,int min_val=INT_MAX){
+
+        if(!root)
+            return closest_key;
+        if(abs(root->data-k)<=min_val){
+            //update the key_closest and min_val
+            min_val=abs(root->data-k);
+            closest_key=root->data;
+        }
+
+        if(root->data == k)
+            return k;
+        if(k>root->data)// go left
+            return closest_k(root->rightPtr,k,closest_key,min_val);
+        if(k<root->data)// go left
+            return closest_k(root->leftPtr,k,closest_key,min_val);
+        return closest_key;
+}
+
+tree* closest_key_node(tree* root, int k,tree* closest_key_root= NULL ,int min_val=INT_MAX){
+
+        if(!root)
+            return closest_key_root;
+        if(abs(root->data-k)<min_val){
+            //update the key_closest and min_val
+            min_val=abs(root->data-k);
+            closest_key_root=root;
+        }
+
+        if(root->data == k)
+            return root;
+        if(k>root->data)// go left
+            return closest_key_node(root->rightPtr,k,closest_key_root,min_val);
+        if(k<root->data)// go left
+            return closest_key_node(root->leftPtr,k,closest_key_root,min_val);
+        
+        return closest_key_root;
+}
+
+int pos_k(tree* root, int key){
+    if(root->data == key)
+        return getCount(root->leftPtr) + 1;
+    if(key<root->data){
+        return pos_k(root->leftPtr,key);
+    }
+    if(key>root->data){
+        return (getCount(root)-getCount(root->rightPtr)) + pos_k(root->rightPtr,key);
+    }
+}
+
+int count_range_val(tree* root,int x, int y){
+            int balance_out_factor = 0;
+            if(x>y){
+                //swap
+                int temp=x;
+                x=y;
+                y=temp;
+            }
+            int temp_x = closest_k(root, x);
+            if(temp_x<x){
+                balance_out_factor+=1;
+            }
+            int temp_pos_x=pos_k(root,temp_x);
+            int temp_y = closest_k(root, y);
+            if(temp_y>y){
+                balance_out_factor+=1;
+            }
+            int temp_pos_y=pos_k(root,temp_y);
+            return (temp_pos_y - temp_pos_x)+1 - balance_out_factor;
+}
+
 int main(){
-
-    ios_base::sync_with_stdio(false);
-
-    cin.tie(NULL);
 
     int val;
 
     int n;
-
     cin>>n;
+
+    //std::fstream testfile("testq2.txt", std::ios_base::in);
+    //testfile>>n;
 
     tree* avl = NULL;
 
-     for(int i=0;i<n;i++){
+    for(int i=0;i<n;i++){
         cin>>val;
+       // testfile>>val;
         avl= insertion(avl,val);
-        
-        printf("%.1f\n",getMedian(avl));
+        cout<<"Running Median: "<<getMedian(avl)<<endl;
         }
-
     return 0;
-
 }
+    
